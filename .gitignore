@@ -1,0 +1,9 @@
+# Exclude the cloned OpenProject repository
+openproject-repo/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
