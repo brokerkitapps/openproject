@@ -35,6 +35,68 @@ This approach keeps the management repository lightweight while providing access
 
 This wrapper repository allows you to manage and customize the OpenProject installation while keeping the original source separate.
 
+## Railway Deployment
+
+This OpenProject instance is deployed on Railway using the official template:
+- **Template URL**: https://railway.com/deploy/_Ozucr
+- **OpenProject Version**: 14.4.2
+- **Custom Domain**: projects.brokerkit.app
+- **Port Configuration**: TCP port 80 (OpenProject Docker image default)
+
+The deployment includes:
+- PostgreSQL database service
+- OpenProject application (openproject/openproject:14.4.2)
+- Environment variables configured for HTTPS and database connection
+
+## Railway CLI
+
+The Railway CLI is used for infrastructure troubleshooting and log review. It provides direct access to your Railway deployment for monitoring and debugging.
+
+### Authentication
+
+Authenticate with your Railway API token:
+
+```bash
+export RAILWAY_TOKEN=your_api_token_here
+railway whoami  # Verify authentication
+```
+
+### Common Commands
+
+**View real-time logs:**
+```bash
+railway logs
+```
+
+**Check service status:**
+```bash
+railway status
+```
+
+**Link to your project:**
+```bash
+railway link
+```
+
+**List available services:**
+```bash
+railway service
+```
+
+**Get help:**
+```bash
+railway --help
+```
+
+### Troubleshooting
+
+Use the Railway CLI for:
+- Monitoring application logs in real-time
+- Debugging deployment issues
+- Checking service health and status
+- Viewing environment variables
+- Investigating connectivity problems
+
 ## Usage
 
 Add your management scripts, configuration files, and documentation at the root level.
