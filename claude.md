@@ -48,6 +48,34 @@ The deployment includes:
 - OpenProject application (openproject/openproject:14.4.2)
 - Environment variables configured for HTTPS and database connection
 
+## Database Backups
+
+Railway native backups are enabled for the PostgreSQL database to ensure data protection and recovery capabilities.
+
+### Backup Configuration
+- **Schedule**: Daily backups (every 24 hours)
+- **Retention**: 6 days
+- **Volume**: postgres-volume (`/var/lib/postgresql/data`)
+- **Type**: Incremental, copy-on-write backups
+- **Cost**: Charged only for incremental backup data (per GB/minute)
+
+### Accessing Backups
+1. Navigate to the Railway project dashboard: https://railway.app/project/6ef0f0c6-a251-449e-ba97-2b9a14c17e2c
+2. Select the **postgres** service
+3. Go to the **Volumes** tab
+4. Click on **postgres-volume**
+5. View backup history and restore options in the **Backups** section
+
+### Restoring from Backup
+To restore a backup:
+1. Locate the desired backup by date stamp
+2. Click the **Restore** button
+3. Review the staged changes
+4. A new volume will be mounted with the backup data
+5. The original volume is preserved but unmounted
+
+**Note**: Backups can only be restored within the same project and environment. Wiping a volume will delete all associated backups.
+
 ## Railway CLI
 
 The Railway CLI is used for infrastructure troubleshooting and log review. It provides direct access to your Railway deployment for monitoring and debugging.
