@@ -80,50 +80,140 @@ To restore a backup:
 
 The Railway CLI is used for infrastructure troubleshooting and log review. It provides direct access to your Railway deployment for monitoring and debugging.
 
+**Best Practice**: Use Railway CLI for all Railway operations when possible (instead of the UI) to automate changes, ensure consistency, and enable scripting.
+
 ### Authentication
 
 Authenticate with your Railway API token:
 
 ```bash
+# Set your Railway API token (get from https://railway.app/account/tokens)
 export RAILWAY_TOKEN=your_api_token_here
 railway whoami  # Verify authentication
 ```
 
-### Common Commands
+### Linking to Project
 
-**View real-time logs:**
 ```bash
-railway logs
+# Link to your specific project (one-time setup in the directory)
+railway link --project 6ef0f0c6-a251-449e-ba97-2b9a14c17e2c
+
+# Verify you're linked to the correct project
+railway list  # Shows services in the project
 ```
 
-**Check service status:**
+### Common Commands
+
+**View application logs:**
+```bash
+# Stream real-time logs from openproject service
+railway logs --service openproject
+
+# Fetch last 50 lines of logs
+railway logs --service openproject --lines 50
+
+# View logs from specific deployment
+railway logs DEPLOYMENT_ID
+```
+
+**View deployment/build logs:**
+```bash
+# Show build logs
+railway logs --build
+
+# Show deployment logs
+railway logs --deployment
+```
+
+**Check service status and details:**
+```bash
+railway status
+railway service  # List all services
+railway service --help  # Service management
+```
+
+**Manage environment variables:**
+```bash
+# View all variables for current service
+railway variables
+
+# Set a variable
+railway variables set ATTACHMENTS_STORAGE fog
+
+# View specific variable
+railway variables get FOG
+```
+
+**View logs with filtering:**
+```bash
+# Search for specific errors in logs
+railway logs --service openproject --lines 100 | grep -i error
+
+# View JSON formatted logs
+railway logs --service openproject --json | head -20
+```
+
+### Troubleshooting Workflow
+
+**Step 1: Check if service is running**
 ```bash
 railway status
 ```
 
-**Link to your project:**
+**Step 2: View recent logs for errors**
 ```bash
-railway link
+railway logs --service openproject --lines 100
 ```
 
-**List available services:**
+**Step 3: Check environment variables are loaded**
 ```bash
-railway service
+railway variables  # Verify ATTACHMENTS_STORAGE and FOG are set
 ```
 
-**Get help:**
+**Step 4: View build/deployment logs if app won't start**
 ```bash
-railway --help
+railway logs --deployment --lines 50
+railway logs --build --lines 50
 ```
 
-### Troubleshooting
+**Step 5: Check specific service**
+```bash
+railway service --status  # Check postgres, openproject services
+```
 
-Use the Railway CLI for:
-- Monitoring application logs in real-time
-- Debugging deployment issues
-- Checking service health and status
-- Viewing environment variables
-- Investigating connectivity problems
+### Common Issues & CLI Commands
+
+**App not responding - Check logs:**
+```bash
+railway logs --service openproject --lines 200 | grep -i "error\|fail\|exception"
+```
+
+**Environment variables not loading:**
+```bash
+railway variables  # List all set variables
+railway variables get ATTACHMENTS_STORAGE
+railway variables get FOG
+```
+
+**Check database connection:**
+```bash
+railway service postgres  # Switch to postgres service
+railway logs --service postgres --lines 50
+```
+
+**Redeploy after variable changes:**
+```bash
+railway deploy --service openproject
+```
+
+### Best Practices
+
+- **Use CLI over UI**: Automate operations, reduce errors, enable scripting
+- **Set RAILWAY_TOKEN**: Store in `.env` or shell profile for convenience
+- **Link projects**: Use `railway link` in project directories
+- **Monitor logs regularly**: Use `railway logs` to catch issues early
+- **Document changes**: Reference CLI commands in commit messages for reproducibility
+- **Test before pushing**: Use CLI to verify changes before remote deployment
 
 ## Documentation Standards
 
