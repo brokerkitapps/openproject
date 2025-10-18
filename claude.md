@@ -125,6 +125,40 @@ Use the Railway CLI for:
 - Viewing environment variables
 - Investigating connectivity problems
 
+## Documentation Standards
+
+To keep the repository clean and organized:
+
+### GitHub Issues for Project Tracking
+- Use **GitHub Issues** to track project tasks, features, and implementations
+- Update issues with "What's Completed" and "What's Next" sections
+- Use issue comments for ongoing updates during implementation
+- Reference related issues in commit messages with `Relates to #<issue-number>`
+
+### Repository Documentation
+- Keep repository docs minimal and focused on architecture/setup decisions
+- Avoid duplicating project tracking information in separate doc files
+- Example: R2 integration status tracked in Issue #3 instead of separate docs
+- Document significant decisions and configurations that affect the repo structure
+
+### Configuration Files
+- Use `.env.local` for local secrets (gitignored)
+- Use environment variables in production (Railway Variables)
+- Never commit credentials, keys, or sensitive data
+- Document the format of environment variables in code comments
+
+### When to Document in Repository
+- Architecture decisions and design patterns
+- Setup instructions that are unlikely to change frequently
+- Scripts and automation procedures
+- External service integrations and configurations
+
+### When to Use GitHub Issues
+- Feature implementations and their progress
+- Bug fixes and their status
+- Configuration changes and deployment steps
+- Project tracking and status updates
+
 ## Usage
 
 Add your management scripts, configuration files, and documentation at the root level.
