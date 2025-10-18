@@ -228,9 +228,9 @@ railway service postgres  # Switch to postgres service
 railway logs --service postgres --lines 50
 ```
 
-**Redeploy after variable changes:**
+**Redeploy after variable changes (with auto-confirmation):**
 ```bash
-railway deploy --service openproject
+railway deployment redeploy -y
 ```
 
 ### Local Environment File (.env)
@@ -266,37 +266,54 @@ echo $CLOUDFLARE_API_TOKEN
 
 **Important**: `.env` is in `.gitignore` and will never be committed. Keep it safe locally and never share credentials.
 
-### Using Railway CLI for Droid
+### Why Railway CLI Works for Droid
 
-When I (Droid) use Railway CLI to diagnose issues, I will:
+Railway CLI stores authentication locally and persists across shell sessions. This means:
+- Each Execute call runs in a new isolated shell, but Railway CLI's cached authentication is available
+- No need to re-authenticate between commands
+- Droid can use Railway CLI directly without managing tokens in environment variables
 
-1. **Authenticate** using `railway whoami` to verify access
-2. **Link to project** with the project ID from .env
-3. **View logs** with `railway logs --service openproject --lines <number>`
-4. **Check variables** with `railway variables` to verify environment setup
-5. **Identify errors** by searching logs for error patterns
-6. **Redeploy** with `railway deploy --service openproject` after fixes
+This enables fast, automated Railway management without interactive browser logins.
 
-Example diagnostic workflow:
+### Using Railway CLI for Droid (Proven Workflow)
+
+When I (Droid) use Railway CLI, I follow this proven pattern:
+
+1. **Check status**: `railway status` (verifies authentication and project link)
+2. **Set variables**: `railway variables --set "KEY=VALUE"` (supports JSON values)
+3. **Monitor logs**: `railway logs --lines 200` (view deployment progress)
+4. **Redeploy**: `railway deployment redeploy -y` (auto-confirm without prompts)
+5. **Verify success**: Check logs for service startup messages
+
+**Complete workflow example (R2 deployment):**
 ```bash
-# Set token from .env
-export RAILWAY_TOKEN=$RAILWAY_API_TOKEN
+# Verify we're linked to the correct project
+railway status
 
-# Verify authentication
-railway whoami
+# Set R2 storage configuration (JSON-safe)
+railway variables --set 'OPENPROJECT_ATTACHMENTS_STORAGE=fog'
+railway variables --set 'OPENPROJECT_FOG={"credentials":{"provider":"AWS",...},"directory":"bucket-name"}'
 
-# Link to project
-railway link --project $RAILWAY_PROJECT_ID
+# Verify variables were set
+railway variables | grep OPENPROJECT
 
-# Get latest logs
-railway logs --service openproject --lines 200
+# Trigger redeploy with auto-confirmation
+railway deployment redeploy -y
 
-# Filter for errors
-railway logs --service openproject --lines 100 | grep -i "error\|fail\|exception"
+# Monitor startup (wait 30+ seconds for full boot)
+sleep 30
+railway logs --lines 100
 
-# Check variables are set
-railway variables | grep -E "FOG|ATTACHMENTS"
+# Filter for errors or success
+railway logs --lines 200 | grep -i "listening\|success\|error"
 ```
+
+**Key command syntax:**
+- Set variables: `railway variables --set "KEY=VALUE"` (NOT `set` alone)
+- Redeploy: `railway deployment redeploy -y` (NOT `railway deploy`)
+- Auto-confirm: Add `-y` flag to skip interactive prompts
+- View logs: `railway logs --lines <N>` or `railway logs --service <name>`
+- List deployments: `railway deployment list`
 
 ### Best Practices
 
