@@ -245,13 +245,18 @@ RAILWAY_PROJECT_ID=<your_project_id>
 RAILWAY_ENVIRONMENT_ID=<your_environment_id>
 RAILWAY_SERVICE_ID=<your_service_id>
 
-# Cloudflare API token for R2 operations
-CLOUDFLARE_API_TOKEN=<your_token>
-CLOUDFLARE_ACCOUNT_ID=<your_account_id>
+# AWS credentials for S3 operations
+AWS_ACCESS_KEY_ID=<your_access_key>
+AWS_SECRET_ACCESS_KEY=<your_secret_key>
+AWS_REGION=<your_region>
 
-# OpenProject file storage (R2)
-ATTACHMENTS_STORAGE=fog
-FOG=<json_with_r2_credentials>
+# OpenProject file storage (AWS S3)
+OPENPROJECT_ATTACHMENTS__STORAGE=fog
+OPENPROJECT_FOG_CREDENTIALS_PROVIDER=AWS
+OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID=<your_access_key>
+OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY=<your_secret_key>
+OPENPROJECT_FOG_CREDENTIALS_REGION=<your_region>
+OPENPROJECT_FOG_DIRECTORY=<your_bucket_name>
 ```
 
 **Loading .env**:
@@ -285,14 +290,18 @@ When I (Droid) use Railway CLI, I follow this proven pattern:
 4. **Redeploy**: `railway deployment redeploy -y` (auto-confirm without prompts)
 5. **Verify success**: Check logs for service startup messages
 
-**Complete workflow example (R2 deployment):**
+**Complete workflow example (S3 deployment):**
 ```bash
 # Verify we're linked to the correct project
 railway status
 
-# Set R2 storage configuration (JSON-safe)
-railway variables --set 'OPENPROJECT_ATTACHMENTS_STORAGE=fog'
-railway variables --set 'OPENPROJECT_FOG={"credentials":{"provider":"AWS",...},"directory":"bucket-name"}'
+# Set S3 storage configuration
+railway variables --set 'OPENPROJECT_ATTACHMENTS__STORAGE=fog'
+railway variables --set 'OPENPROJECT_FOG_CREDENTIALS_PROVIDER=AWS'
+railway variables --set 'OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID=<key>'
+railway variables --set 'OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY=<secret>'
+railway variables --set 'OPENPROJECT_FOG_CREDENTIALS_REGION=us-east-2'
+railway variables --set 'OPENPROJECT_FOG_DIRECTORY=<bucket-name>'
 
 # Verify variables were set
 railway variables | grep OPENPROJECT
