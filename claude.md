@@ -47,6 +47,102 @@ The deployment includes:
 - PostgreSQL database service
 - OpenProject application (openproject/openproject:14.4.2)
 - Environment variables configured for HTTPS and database connection
+- AWS S3 for file attachments storage
+
+## AWS S3 File Storage
+
+OpenProject is configured to store file attachments in AWS S3 using the fog storage adapter.
+
+### Configuration
+
+**S3 Bucket:**
+- **Bucket Name**: openproject-attachments-brokerkit
+- **Region**: us-east-2 (US East Ohio)
+- **IAM User**: openproject-s3-user
+- **Required Permissions**: PutObject, GetObject, ListBucket, DeleteObject
+
+**Railway Environment Variables:**
+```bash
+OPENPROJECT_ATTACHMENTS__STORAGE=fog
+OPENPROJECT_FOG_CREDENTIALS_PROVIDER=AWS
+OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID=<access-key>
+OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY=<secret-key>
+OPENPROJECT_FOG_CREDENTIALS_REGION=us-east-2
+OPENPROJECT_FOG_DIRECTORY=openproject-attachments-brokerkit
+OPENPROJECT_DIRECT__UPLOADS=false
+```
+
+### Direct Uploads
+
+**Current Setting:** `OPENPROJECT_DIRECT__UPLOADS=false`
+
+With direct uploads disabled, files are uploaded through the OpenProject server to S3. This is the recommended configuration for most use cases.
+
+**Why Direct Uploads are Disabled:**
+- ✅ Simpler configuration (no CORS complexity)
+- ✅ All uploads validated by OpenProject server
+- ✅ Works reliably for standard file sizes
+- ✅ No browser CORS issues
+
+**When to Enable Direct Uploads:**
+- Uploading very large files (>100MB regularly)
+- Many concurrent users uploading simultaneously
+- Server resources are constrained
+
+**To Enable Direct Uploads:**
+1. S3 bucket CORS is already configured (see `s3-cors-config.json`)
+2. Set `OPENPROJECT_DIRECT__UPLOADS=true` or remove the variable
+3. Redeploy the application
+4. Test browser-to-S3 uploads work correctly
+
+### CORS Configuration
+
+CORS is pre-configured on the S3 bucket to support direct uploads if needed in the future. Configuration file: `s3-cors-config.json`
+
+```json
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["https://projects.brokerkit.app"],
+      "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}
+```
+
+**Apply CORS Configuration:**
+```bash
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+export AWS_DEFAULT_REGION=us-east-2
+aws s3api put-bucket-cors --bucket openproject-attachments-brokerkit --cors-configuration file://s3-cors-config.json
+```
+
+### Troubleshooting S3 Storage
+
+**Verify S3 credentials work:**
+```bash
+source .env
+aws s3 ls s3://openproject-attachments-brokerkit/
+```
+
+**Check uploaded files:**
+```bash
+aws s3 ls s3://openproject-attachments-brokerkit/uploads/ --recursive
+```
+
+**Test file upload:**
+```bash
+echo "test" | aws s3 cp - s3://openproject-attachments-brokerkit/test.txt
+```
+
+**View Railway logs for S3 errors:**
+```bash
+railway logs --service OpenProject --lines 200 | grep -i "s3\|fog\|upload\|attachment"
+```
 
 ## Database Backups
 
@@ -248,15 +344,15 @@ RAILWAY_SERVICE_ID=<your_service_id>
 # AWS credentials for S3 operations
 AWS_ACCESS_KEY_ID=<your_access_key>
 AWS_SECRET_ACCESS_KEY=<your_secret_key>
-AWS_REGION=<your_region>
+AWS_REGION=us-east-2
 
 # OpenProject file storage (AWS S3)
 OPENPROJECT_ATTACHMENTS__STORAGE=fog
 OPENPROJECT_FOG_CREDENTIALS_PROVIDER=AWS
 OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID=<your_access_key>
 OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY=<your_secret_key>
-OPENPROJECT_FOG_CREDENTIALS_REGION=<your_region>
-OPENPROJECT_FOG_DIRECTORY=<your_bucket_name>
+OPENPROJECT_FOG_CREDENTIALS_REGION=us-east-2
+OPENPROJECT_FOG_DIRECTORY=openproject-attachments-brokerkit
 ```
 
 **Loading .env**:
@@ -265,8 +361,8 @@ OPENPROJECT_FOG_DIRECTORY=<your_bucket_name>
 source .env
 
 # Verify they're loaded
-echo $RAILWAY_TOKEN
-echo $CLOUDFLARE_API_TOKEN
+echo $RAILWAY_API_TOKEN
+echo $AWS_ACCESS_KEY_ID
 ```
 
 **Important**: `.env` is in `.gitignore` and will never be committed. Keep it safe locally and never share credentials.
