@@ -60,7 +60,7 @@ Railway native backups are enabled for the PostgreSQL database to ensure data pr
 - **Cost**: Charged only for incremental backup data (per GB/minute)
 
 ### Accessing Backups
-1. Navigate to the Railway project dashboard: https://railway.app/project/6ef0f0c6-a251-449e-ba97-2b9a14c17e2c
+1. Navigate to the Railway project dashboard: https://railway.app/project/$RAILWAY_PROJECT_ID
 2. Select the **postgres** service
 3. Go to the **Volumes** tab
 4. Click on **postgres-volume**
@@ -78,29 +78,56 @@ To restore a backup:
 
 ## Railway CLI
 
-The Railway CLI is used for infrastructure troubleshooting and log review. It provides direct access to your Railway deployment for monitoring and debugging.
+The Railway CLI is the primary tool for managing your OpenProject deployment on Railway. Use it for infrastructure troubleshooting, log review, and deployment diagnostics.
 
 **Best Practice**: Use Railway CLI for all Railway operations when possible (instead of the UI) to automate changes, ensure consistency, and enable scripting.
 
-### Authentication
+### Setup & Authentication
 
-Authenticate with your Railway API token:
-
+**Option 1: Browser-based Login (Recommended)**
 ```bash
-# Set your Railway API token (get from https://railway.app/account/tokens)
-export RAILWAY_TOKEN=your_api_token_here
-railway whoami  # Verify authentication
+# One-time browser authentication
+railway login
+# This opens your browser and securely connects your account
+
+# Verify authentication
+railway whoami
 ```
 
-### Linking to Project
+**Option 2: API Token Authentication (for CI/CD & Scripts)**
+```bash
+# Get token from https://railway.app/account/tokens
+# Store in .env file with key RAILWAY_API_TOKEN
+# Use in commands: RAILWAY_TOKEN=$RAILWAY_API_TOKEN railway whoami
+```
+
+**Environment Setup (Recommended)**
+```bash
+# Add RAILWAY_API_TOKEN to .env file, then load it:
+source .env
+# Use the token in commands by referencing the environment variable
+```
+
+### Project Linking
+
+Link the CLI to your specific Railway project (required for most operations):
 
 ```bash
-# Link to your specific project (one-time setup in the directory)
-railway link --project 6ef0f0c6-a251-449e-ba97-2b9a14c17e2c
+# Link to the OpenProject deployment
+railway link --project $RAILWAY_PROJECT_ID
 
 # Verify you're linked to the correct project
-railway list  # Shows services in the project
+railway list  # Shows all services in the project
+
+# Check linked environment and service
+railway status
 ```
+
+**Project IDs for Reference** (stored in .env file)
+- **Project ID**: From `.env` file as `$RAILWAY_PROJECT_ID`
+- **Environment ID**: From `.env` file as `$RAILWAY_ENVIRONMENT_ID`
+- **OpenProject Service ID**: From `.env` file as `$RAILWAY_SERVICE_ID`
+- **PostgreSQL Service**: Available via `railway service`
 
 ### Common Commands
 
@@ -206,14 +233,80 @@ railway logs --service postgres --lines 50
 railway deploy --service openproject
 ```
 
+### Local Environment File (.env)
+
+The `.env` file stores all local configuration and credentials. It is **gitignored** to prevent accidental credential exposure.
+
+**Contents of .env**:
+```bash
+# Railway API token for CLI authentication
+RAILWAY_API_TOKEN=<your_token>
+RAILWAY_PROJECT_ID=<your_project_id>
+RAILWAY_ENVIRONMENT_ID=<your_environment_id>
+RAILWAY_SERVICE_ID=<your_service_id>
+
+# Cloudflare API token for R2 operations
+CLOUDFLARE_API_TOKEN=<your_token>
+CLOUDFLARE_ACCOUNT_ID=<your_account_id>
+
+# OpenProject file storage (R2)
+ATTACHMENTS_STORAGE=fog
+FOG=<json_with_r2_credentials>
+```
+
+**Loading .env**:
+```bash
+# Load environment variables from .env
+source .env
+
+# Verify they're loaded
+echo $RAILWAY_TOKEN
+echo $CLOUDFLARE_API_TOKEN
+```
+
+**Important**: `.env` is in `.gitignore` and will never be committed. Keep it safe locally and never share credentials.
+
+### Using Railway CLI for Droid
+
+When I (Droid) use Railway CLI to diagnose issues, I will:
+
+1. **Authenticate** using `railway whoami` to verify access
+2. **Link to project** with the project ID from .env
+3. **View logs** with `railway logs --service openproject --lines <number>`
+4. **Check variables** with `railway variables` to verify environment setup
+5. **Identify errors** by searching logs for error patterns
+6. **Redeploy** with `railway deploy --service openproject` after fixes
+
+Example diagnostic workflow:
+```bash
+# Set token from .env
+export RAILWAY_TOKEN=$RAILWAY_API_TOKEN
+
+# Verify authentication
+railway whoami
+
+# Link to project
+railway link --project $RAILWAY_PROJECT_ID
+
+# Get latest logs
+railway logs --service openproject --lines 200
+
+# Filter for errors
+railway logs --service openproject --lines 100 | grep -i "error\|fail\|exception"
+
+# Check variables are set
+railway variables | grep -E "FOG|ATTACHMENTS"
+```
+
 ### Best Practices
 
 - **Use CLI over UI**: Automate operations, reduce errors, enable scripting
-- **Set RAILWAY_TOKEN**: Store in `.env` or shell profile for convenience
+- **Load .env first**: `source .env` before running Railway CLI commands
 - **Link projects**: Use `railway link` in project directories
 - **Monitor logs regularly**: Use `railway logs` to catch issues early
 - **Document changes**: Reference CLI commands in commit messages for reproducibility
 - **Test before pushing**: Use CLI to verify changes before remote deployment
+- **Keep .env safe**: Never commit, never share, store securely locally only
 
 ## Documentation Standards
 
